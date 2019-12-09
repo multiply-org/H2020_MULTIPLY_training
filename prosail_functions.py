@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 import scipy.optimize as opt
 import json
+import ipywidgets as widgets
+from IPython.display import display
+
+
 try:
     import prosail
 except ImportError:
@@ -12,7 +16,7 @@ except ImportError:
     print("Available from http://github.com/jgomezdans/prosail")
 
 __author__ = "J Gomez-Dans"
-__version__ = "1.0 (05.06.2015)"
+__version__ = "1.0 (09.12.2019)"
 __email__ = "j.gomez-dans@ucl.ac.uk"
 
 
@@ -60,8 +64,9 @@ def call_prospect_d ( n, cab, car, cbrown, cw, cm, ant ):
     ti = np.interp ( x, x[tpass], t[tpass])
     return np.c_[ ri, ti]
 
-def prospect_sensitivity_ssa ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 8.]), \
-                              epsilon=1e-5, do_plots=True ):
+    
+def prospect_sensitivity_ssa ( leaf_n, leaf_cab, leaf_car, leaf_cbrown, leaf_cw, leaf_cm):
+                              
     """Local approximation (around ``x0``) of the sensitivity of the PROSPECT
     model to each input parameter. YOu can set up the point around which the
     sensitivity is calculated (``x0``), the value of the finite difference 
@@ -82,6 +87,10 @@ def prospect_sensitivity_ssa ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 8.
     ----------
     
     """
+    
+    epsilon = 1e-5
+    do_plots = True
+    x0 = np.array([leaf_n, leaf_cab, leaf_car, leaf_cbrown, leaf_cw, leaf_cm])
     sensitivity = np.zeros((7,2101))
     span = np.array([1.5, 80., 20., 1., 0.0439-0.0043, 0.0152-0.0017 ])
     for i in range(6):
@@ -104,7 +113,7 @@ def prospect_sensitivity_ssa ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 8.
                 axs[i].set_ylabel(r'$\partial f/\partial \mathbf{x}$')
             if i > 2:
                 axs[i].set_xlabel ("Wavelength [nm]")
-            pretty_axes ( axs[i] )
+            
         plt.figure(figsize=(10,10))
         for i,input_parameter in enumerate( ['n', 'cab', 'car', 'cbrown', 'cw', 'cm'] ):
             plt.plot( wv, sensitivity[i,:], lw=2, label=input_parameter )
@@ -113,7 +122,19 @@ def prospect_sensitivity_ssa ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 8.
         plt.ylabel(r'$\partial f/\partial \mathbf{x}$')
         plt.xlabel ("Wavelength [nm]")
         plt.legend(loc='best')
-    return wv, sensitivity
+    
+    
+def sensitivity_prospect():
+    epsilon = 1e-5
+    
+    _ = widgets.interact_manual(prospect_sensitivity_ssa, 
+             leaf_n=widgets.FloatSlider(min=1, max=3, value=1.8),
+             leaf_cab=widgets.FloatSlider(min=0, max=100, value=40.),
+             leaf_car=widgets.FloatSlider(min=0, max=25, value=10.),
+             leaf_cbrown=widgets.FloatSlider(min=0, max=1, value=0.1),
+             leaf_cw=widgets.FloatLogSlider(min=-3, max=-1., value=0.0133),
+             leaf_cm=widgets.FloatLogSlider(min=-3, max=-1., value=0.0053))            
+    
     
 def prospect_sensitivity_n ( n_samples=20, spaces=10, 
                             minvals = {'n':1, 'cab':10, 'car':0, 'cbrown': 0, 'cw':0., 'cm':0.0 },
@@ -166,6 +187,23 @@ def prospect_sensitivity_n ( n_samples=20, spaces=10,
     t = np.array ( t )
     xleafn = np.array ( xleafn )
     return xleafn, r, t
+
+
+def veg_index_playground():
+    np.seterr(divide='ignore', invalid='ignore')
+    _ = widgets.interact_manual(do_index, 
+             mode=widgets.Dropdown(options=["ssa", "refl", "trans"], value="ssa"),
+             sweep_param=widgets.Dropdown(options=["n", "cab", "car", "cbrown", "cw", "cm"], value="cw"),
+             band1=widgets.IntSlider(min=400, max=2500, value=1610),
+             band2=widgets.IntSlider(min=400, max=2500, value=865),
+             bwidth1=widgets.IntSlider(min=1, max=100, value=5),
+             bwidth2=widgets.IntSlider(min=1, max=100, value=5),
+             n_samples=widgets.fixed(50),
+             spaces=widgets.fixed(25),
+             minvals = widgets.fixed({'n':0, 'cab':0, 'car':0, 'cbrown': 0, 'cw':0., 'cm':0.0 }),
+             maxvals = widgets.fixed({ 'n': 3.5, 'cab': 80, 'car':200, 'cbrown': 1, 'cw':0.4, 'cm': 0.5 }),
+             do_plots=widgets.fixed(True) )            
+
 
 def do_index ( mode="refl", sweep_param="cab", band1=650, band2=850, bwidth1=5, bwidth2=5,
         n_samples=1, spaces=20, minvals = {'n':0, 'cab':0, 'car':0, 'cbrown': 0, 'cw':0., 'cm':0.0 },
@@ -260,7 +298,7 @@ def do_index ( mode="refl", sweep_param="cab", band1=650, band2=850, bwidth1=5, 
         plt.ylabel ( sweep_param )
         plt.xlabel("VI")
         plt.title ("B1: %g, B2: %G" % ( band1, band2) )
-        pretty_axes()
+        
     return s, vi
 
 
