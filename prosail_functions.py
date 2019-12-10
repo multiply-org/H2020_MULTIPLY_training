@@ -303,6 +303,20 @@ def do_index ( mode="refl", sweep_param="cab", band1=650, band2=850, bwidth1=5, 
 
 
 
+def red_edge_playground():
+    np.seterr(divide='ignore', invalid='ignore')
+    _ = widgets.interact_manual(red_edge, 
+             mode=widgets.Dropdown(options=["ssa", "refl", "trans"], value="refl"),
+             sweep_param=widgets.Dropdown(options=["n", "cab", "car", "cbrown", "cw", "cm"], value="cab"),
+             band1=widgets.IntSlider(min=400, max=2500, value=670),
+             band2=widgets.IntSlider(min=400, max=2500, value=780),
+             n_samples=widgets.fixed(150),
+             spaces=widgets.fixed(7),
+             minvals = widgets.fixed({'n':0.8, 'cab':0, 'car':0, 'cbrown': 0, 'cw':0., 'cm':0.0 }),
+             maxvals = widgets.fixed({ 'n': 3.5, 'cab': 80, 'car':200, 'cbrown': 1, 'cw':0.4, 'cm': 0.5 }),
+             do_plots=widgets.fixed(True) )   
+
+
 def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
         n_samples=150, spaces=7, minvals = {'n':1.0, 'cab':15, 'car':10, 'cbrown': 0, 'cw':0., 'cm':0.0 },
         maxvals = { 'n': 2.5, 'cab': 80, 'car':20, 'cbrown': 1, 'cw':0.4, 'cm': 0.5 },
@@ -367,7 +381,7 @@ def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
     red_edge = []
     rred_edge = []
     unc = []
-    fig, axs = plt.subplots( nrows=1, ncols=2, figsize=(12,5))
+    fig, axs = plt.subplots( nrows=1, ncols=2)
     for ii, s in enumerate ( np.linspace ( minvals[sweep_param], maxvals[sweep_param], num=spaces ) ): 
         yy = np.zeros( (isel.sum(), n_samples ) )
         for i in range( n_samples ):
@@ -404,7 +418,7 @@ def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
         axs[1].set_xlabel(sweep_param)
         axs[1].set_ylabel (r'$\lambda_{red\, edge}\;\left[nm\right]$')
         pretty_axes ( axs[1])
-    
+    plt.tight_layout()
     return np.array(ss), np.array(red_edge)
 
 
@@ -426,20 +440,25 @@ def read_lopex_sample ( sample_no=23, do_plot=True, db_path = "data/LOPEX93/" ):
     """
     if sample_no < 1 or sample_no > 116:
         raise ValueError ("There are only 116 samples in this database")
-    refl = np.loadtxt("%s/refl.%03d.dat" % ( db_path,  sample_no )).reshape((5,2101))
+    try:
+        refl = np.loadtxt("%s/refl.%03d.dat" % ( db_path,  sample_no )).reshape((5,2101))
+    except IOError:
+        print("This sample is not available in the database!")
     trans = np.loadtxt("%s/trans.%03d.dat" % ( db_path,  sample_no ) ).reshape((5,2101))
         
     wv = np.arange(400, 2501)
 
     if do_plot:
-        fig, axs = plt.subplots ( nrows=2, ncols=1, figsize=(10,10), sharex=True )
+        fig, axs = plt.subplots ( nrows=2, ncols=1, sharex=True )
         for nsample in range(5):
             axs[0].plot ( wv, refl[nsample,:])
             axs[1].plot ( wv, trans[nsample,:])
         axs[0].set_title("Reflectance")
         axs[1].set_title("Transmittance")
         axs[1].set_xlabel("Wavelength [nm]")
-    return refl, trans
+    
+    read_lopex_sample.data = (refl, trans)
+    #return refl, trans
 
 
 
