@@ -548,7 +548,6 @@ def the_cost_function ( x, refl, trans ):
 def call_prosail ( n, cab, car, ant, cbrown, cw, cm, lai, lidf, rsoil, 
              psoil, hspot, sza, vza, vaa ):
     """Helper function"""
-    
     r = prosail.run_prosail ( n, cab, car, cbrown, cw, cm, 
                              lai, lidf,  hspot, sza, vza, vaa, ant=ant,
                              rsoil=rsoil, psoil=psoil, prospect_version="D" )
@@ -557,8 +556,47 @@ def call_prosail ( n, cab, car, ant, cbrown, cw, cm, lai, lidf, rsoil,
     ri = np.interp ( x, x[rpass], r[rpass])
     return ri
 
-def prosail_sensitivity_ssa ( x0=np.array([1.5, 40., 8., 0., 0.0113, 0.0053, 1.5, 
-                                           45., 1, 1, 0.01, 8]), 
+
+def prosail_sensitvitiy_gui():
+    
+    parameters = ["n", "cab", "car", "ant", "cbrown", "cw", "cm", 
+                  "lai", "lidf", "rsoil", "psoil", "hspot"]
+    minvals = {'n':1.0, 'cab':15., 'car':10., "ant":0., 'cbrown': 0., 'cw':0.001, 'cm':0.0, 
+                               'lai':.5, 'lidf':0., 'rsoil':0., 'psoil':0., 'hspot':0.0001 }
+    
+    maxvals = { 'n': 2.5, 'cab': 80., 'car':20., "ant":40, 'cbrown': 1., 'cw':0.04, 'cm': 0.5,
+                               'lai':8.05, 'lidf':90., 'rsoil':2., 'psoil':2., 'hspot':0.5 }
+    
+    vals = { 'n': 2.1, 'cab': 30., 'car':16., "ant":8, 'cbrown': 0., 'cw':0.013, 'cm': 0.0053,
+                               'lai':3, 'lidf':45., 'rsoil':1., 'psoil':1., 'hspot':0.01 }
+    leaf_w = {k:widgets.FloatSlider(min=minvals[k], max=maxvals[k], value=vals[k], description=k)
+                           for k in parameters[:6]}
+    
+    canopy_w = {k:widgets.FloatSlider(min=minvals[k], max=maxvals[k], value=vals[k], description=k)
+                           for k in parameters[6:]}
+    acq_w ={"sza": widgets.FloatSlider(min=0, max=90, value=0, description="SZA"),
+            "vza": widgets.FloatSlider(min=0, max=90, value=30, description="VZA"),
+            "raa": widgets.FloatSlider(min=0, max=180, value=0, description="RAA")}
+    r1 = list(leaf_w.values())
+    r2 = list(canopy_w.values())
+    r3 = list(acq_w.values())
+    
+    leaf_w.update(canopy_w)
+    leaf_w.update(acq_w)
+    
+    gui = widgets.VBox([widgets.HBox(r1[:3]),
+                        widgets.HBox(r1[3:]),
+                       widgets.HBox(r2[:3]),
+                        widgets.HBox(r2[3:]),
+                       widgets.HBox(r3)])
+    def on_toggle(**values):
+        xx = [v for k, v in values.items()]
+        prosail_sensitivity(*xx,
+                             epsilon=1e-5, do_plots=True)
+    interact_out = widgets.interactive_output(on_toggle, leaf_w)
+    display(gui, interact_out)
+
+def prosail_sensitivity (leaf_n, leaf_cab, leaf_car, leaf_ant, leaf_cbrown, leaf_cw, leaf_cm, lai, ala, rsoil, psoil, hspot,
                              sza=0., vza=30., raa=0.,
                              epsilon=1e-5, do_plots=True ):
     """Local approximation (around ``x0``) of the sensitivity of the PROSAIL
@@ -588,50 +626,128 @@ def prosail_sensitivity_ssa ( x0=np.array([1.5, 40., 8., 0., 0.0113, 0.0053, 1.5
     ----------
     
     """
+    ########################################################
+    x0 = np.array([leaf_n, leaf_cab, leaf_car, leaf_ant, 
+                   leaf_cbrown, leaf_cw, leaf_cm, lai, ala,
+                   rsoil, psoil, hspot])
     sensitivity = np.zeros((12,2101))
-    span = np.array([1.5, 80., 20., 1., 0.0439-0.0043, 0.0152-0.0017, 8., 90., 2., 2, 0.2, 40. ])
+    span = np.array([1.5, 20., 20., 40., 1., 
+                     0.0439-0.0043, 0.0152-0.0017,
+                     8., 10., 2., 2, 0.2])
+    r0 = call_prosail ( *(x0.tolist() + [sza, vza,raa]) )
     for i in range(12):
-        r0 = call_prosail ( *(x0.tolist() + [sza, vza,raa]) )
         xp = x0*1.
         xp[i] = x0[i] + epsilon*span[i]
         r1 = call_prosail ( *(xp.tolist() + [sza, vza,raa]) )
         sensitivity[i,:] = ((r0-r1)/epsilon)*(xp[i]/r1[:])
-    
+    #################################################################
+
     if do_plots:
         wv = np.arange( 400, 2501 )
-        fig, axs = plt.subplots ( figsize=(10,10), nrows=4, ncols=3, 
-                                     sharex=True, sharey=True )
+        fig, axs = plt.subplots ( nrows=4, ncols=3, figsize=(9,9),
+                                     sharex=True )
         axs = axs.flatten()
-        for i,input_parameter in enumerate( ['n', 'cab', 'car', 'cbrown', 'cw', 'cm', 
+        for i, input_parameter in enumerate( ['n', 'cab', 'car', "Anth", 'cbrown', 'cw', 'cm', 
                                             'LAI', 'LIDF', 'RSOIL','PSOIL', 'HOTSPOT',
-                                            "Anth"] ):
+                                            ] ):
             axs[i].plot ( wv, sensitivity[i,:], '-', lw=2)
-            axs[i].set_title( input_parameter )
+            axs[i].set_title( f"{input_parameter}: {x0[i]}" )
             axs[i].set_xlim ( 400, 2500 )
             axs[i].axhline ( 0, color="0.8")
-            #if i in [ 0, 3]:
-            #    axs[i].set_ylabel(r'$\partial f/\partial \mathbf{x}$')
-            #if i > 2:
-            #    axs[i].set_xlabel ("Wavelength [nm]")
-            pretty_axes ( axs[i] )
-            axs[i].set_ylim(-0.5, 0.5)
-        plt.figure(figsize=(10,10))
-        for i,input_parameter in enumerate( ['n', 'cab', 'car', 'cbrown', 'cw', 'cm',
-                                            'LAI', 'LIDF', 'RSOIL','PSOIL', 'HOTSPOT',
-                                            "Anth"] ):
-            plt.plot( wv, sensitivity[i,:], lw=2, label=input_parameter )
-            pretty_axes()
+            if i in [ 0, 3]:
+                axs[i].set_ylabel(r'$\partial f/\partial \mathbf{x}$')
+            if i > 2:
+                axs[i].set_xlabel ("Wavelength [nm]")
+            #pretty_axes ( axs[i] )
+            #axs[i].set_ylim(-0.5, 0.5)
+        plt.figure(figsize=(9,9))
+        for i,input_parameter in enumerate( ['n', 'cab', 'car', "Anth", 'cbrown', 'cw', 'cm',
+                                            'LAI', 'LIDF', 'RSOIL','PSOIL', 'HOTSPOT'
+                                            ] ):
+            plt.plot( wv, np.abs(sensitivity[i,:]), lw=2, label=input_parameter )
+            
         plt.xlim ( 400, 2500)
         plt.ylabel(r'$\partial f/\partial \mathbf{x}$')
         plt.xlabel ("Wavelength [nm]")
         plt.legend(loc='best')
+    plt.tight_layout()
     return wv, sensitivity
 
-def mtci_experiment ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 6, 
+
+def hspot ( h, theta ):
+    retval1 = []
+    retval2 = []
+    wv = np.arange(400, 2501)
+    for theta_v in np.arange ( -80,80, 5):
+        if theta_v < 0:
+            raa = -180
+            t = -theta_v
+        else:
+            raa = 0
+            t = theta_v
+        r = call_prosail ( 2., 40, 10., 0.,0.2, 0.0143, 0.007, 4, 45, 0.1, 
+                 1, h, theta, t, raa )
+        retval1.append ( r[wv==865] )
+        retval2.append ( r[wv==650] )
+    plt.plot(np.arange ( -80,80, 5), np.array(retval1).squeeze(),
+             '-', label=f"{h:5g} @865nm")
+    plt.plot(np.arange ( -80,80, 5), np.array(retval2).squeeze(),
+             '-', label=f"{h:5g} @650nm")
+    plt.xlabel("VZA [deg]")
+    plt.ylabel("Reflectance")
+    plt.legend(loc="best")  
+
+
+    
+def canopy_mtci_exp_gui():
+    parameters = ['n', 'cab', 'car', 'ant','cbrown', 'cw', 'cm',
+                  'lai', 'lidf', 'rsoil', 'psoil', 'hspot']
+    #parameters = ["leaf_n", "leaf_cab", "leaf_car", "leaf_ant", 
+    #                   "leaf_cbrown", "leaf_cw", "leaf_cm", "lai", "ala",
+    #                   "rsoil", "psoil", "hspot", "sza", "vza", "raa"]
+    some_buttons = {k:widgets.ToggleButton(description=k, value=False)
+                     for k in parameters if k != "cab"}
+    some_buttons['cab'] = widgets.ToggleButton(description="cab", value=True)
+    
+    some_pars ={"SZA": widgets.FloatSlider(min=0, max=90, value=0, description="SZA"),
+                "VZA": widgets.FloatSlider(min=0, max=90, value=30, description="VZA"),
+                "RAA": widgets.FloatSlider(min=0, max=180, value=0, description="RAA"),
+                "obs_unc": widgets.FloatLogSlider(min=-4, max=-0.2, value=0.001, description="Uncertainty"),
+                "bwidth":widgets.IntSlider(min=1, max=50, value=5, description="Bandwidth")}
+
+    some_buttons.update(some_pars)
+
+    gui_disp = widgets.VBox([widgets.HBox([some_buttons["n"], some_buttons["cab"], some_buttons["car"]]),
+                             widgets.HBox([some_buttons["cbrown"], some_buttons["cw"], some_buttons["cm"]]),
+                             widgets.HBox([some_buttons["lai"], some_buttons["lidf"], some_buttons["hspot"]]),
+                             widgets.HBox([some_buttons["rsoil"], some_buttons["psoil"]]),
+                             widgets.HBox([some_pars["SZA"], some_pars["VZA"], some_pars["RAA"]]),
+                             widgets.HBox([some_pars["obs_unc"], some_pars["bwidth"]])
+                            ])
+
+
+
+    def on_toggle(**values):
+        
+        nuisance=[p for p in parameters if values[p]]
+        obs_noise = values['obs_unc']
+        sza = values['SZA']
+        vza = values['VZA']
+        raa = values['RAA']
+        bwidth = values["bwidth"]
+        _ = mtci_experiment (nuisance=nuisance, 
+                        noise_level=obs_noise, 
+                        sza=sza, vza=vza, 
+                        raa=raa, bwidth=bwidth,
+                        )
+    interact_out = widgets.interactive_output(on_toggle, some_buttons)
+    display(gui_disp, interact_out)
+
+def mtci_experiment ( x0=np.array([1.5, 40., 5., 8., 0., 0.0113, 0.0053, 6, 
                                            30., 1, 1, 0.01]), 
-                    minvals = {'n':1.0, 'cab':15., 'car':10., 'cbrown': 0., 'cw':0.001, 'cm':0.0, 
+                    minvals = {'n':1.0, 'cab':15., 'car':10., "ant":0., 'cbrown': 0., 'cw':0.001, 'cm':0.0, 
                                'lai':.5, 'lidf':0., 'rsoil':0., 'psoil':0., 'hspot':0.0001 },
-                    maxvals = { 'n': 2.5, 'cab': 80., 'car':20., 'cbrown': 1., 'cw':0.04, 'cm': 0.5,
+                    maxvals = { 'n': 2.5, 'cab': 80., 'car':20., "ant":40, 'cbrown': 1., 'cw':0.04, 'cm': 0.5,
                                'lai':8.05, 'lidf':90., 'rsoil':2., 'psoil':2., 'hspot':0.5 },
                      bwidth=10,
                      nuisance=None, sza=0., vza=30., raa=0., do_plots=True, n_tries=100, noise_level=0 ):
@@ -678,7 +794,7 @@ def mtci_experiment ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 6,
     The values of chlorophyll concentration, MTCI, and the two parametes of the fitted 
     polynomial.
     """
-    param_position = ['n','cab', 'car', 'cbrown', 'cw', 'cm', 'lai', 'lidf', 'rsoil', 'psoil' ]
+    param_position = ['n','cab', 'car', "ant", 'cbrown', 'cw', 'cm', 'lai', 'lidf', 'rsoil', 'psoil' ]
     if isinstance(nuisance, str) and ( nuisance in param_position):
         nuisance = list ( nuisance )
     elif isinstance(nuisance, (list, tuple)):
@@ -742,8 +858,10 @@ def mtci_experiment ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 6,
                  "\nNuisance: %s" % ( " ".join(nuisance)), fontsize=10)
         
         plt.plot( [0,10], np.polyval(p, [0,10]), '--')
-        pretty_axes()
+        
     return cab_axis, np.array( MTCI ), p[0], p[1]
+
+
 def plot_vi_space ( v,r, n, the_vi ):
     """Plots vegetation index RED/NIR space for a particular VI of those considered (NDVI, SAVI and OSAVI),
     and plot a colour shaded scatter plot of a set of points over RED/NIR space, the colour given by the
@@ -789,16 +907,60 @@ def plot_vi_space ( v,r, n, the_vi ):
     pretty_axes()
     plt.subplot(1,2,2)
     plt.plot(v, vix, 'o')
-    print(the_vi)
     plt.xlabel ( "value")
     plt.ylabel( the_vi )
-    pretty_axes()
 
-def canopy_vi_expt ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 1,  30., 4, 0, 0.01]),
-               nuisance=["lai"], obs_noise=[1e-4, 1e-4],bwidth_r=10, bwidth_n=10,
-               minvals = {'n':1.0, 'cab':15., 'car':5., 'cbrown': 0., 'cw':0.001, 'cm':0.0, 
+def canopy_vi_exp_gui():
+    parameters = ['n', 'cab', 'car', 'ant','cbrown', 'cw', 'cm',
+                  'lai', 'lidf', 'rsoil', 'psoil', 'hspot']
+    #parameters = ["leaf_n", "leaf_cab", "leaf_car", "leaf_ant", 
+    #                   "leaf_cbrown", "leaf_cw", "leaf_cm", "lai", "ala",
+    #                   "rsoil", "psoil", "hspot", "sza", "vza", "raa"]
+    some_buttons = {k:widgets.ToggleButton(description=k, value=False)
+                     for k in parameters if k != "lai"}
+    some_buttons['lai'] = widgets.ToggleButton(description="LAI", value=True)
+    
+    some_pars ={"SZA": widgets.FloatSlider(min=0, max=90, value=0, description="SZA"),
+                "VZA": widgets.FloatSlider(min=0, max=90, value=30, description="VZA"),
+                "RAA": widgets.FloatSlider(min=0, max=180, value=0, description="RAA"),
+                "obs_unc": widgets.FloatLogSlider(min=-4, max=-0.2, value=0.001, description="Uncertainty"),
+                "index": widgets.Dropdown(
+                        options=["NDVI", "SAVI", "OSAVI"], value="NDVI")}
+
+    some_buttons.update(some_pars)
+
+    gui_disp = widgets.VBox([widgets.HBox([some_buttons["n"], some_buttons["cab"], some_buttons["car"]]),
+                             widgets.HBox([some_buttons["cbrown"], some_buttons["cw"], some_buttons["cm"]]),
+                             widgets.HBox([some_buttons["lai"], some_buttons["lidf"], some_buttons["hspot"]]),
+                             widgets.HBox([some_buttons["rsoil"], some_buttons["psoil"]]),
+                             widgets.HBox([some_pars["SZA"], some_pars["VZA"], some_pars["RAA"]]),
+                             widgets.HBox([some_pars["index"], some_pars["obs_unc"]])
+                            ])
+
+
+
+    def on_toggle(**values):
+        
+        nuisance=[p for p in parameters if values[p]]
+        obs_noise = values['obs_unc']
+        sza = values['SZA']
+        vza = values['VZA']
+        raa = values['RAA']
+        veg_index = values["index"]
+        
+        _ = canopy_vi_expt (nuisance=nuisance, 
+                        obs_noise=obs_noise, 
+                        sza=sza, vza=vza, 
+                        raa=raa, 
+                        vin=veg_index)
+    interact_out = widgets.interactive_output(on_toggle, some_buttons)
+    display(gui_disp, interact_out)
+    
+def canopy_vi_expt ( x0=np.array([1.5, 40., 5., 0., 0., 0.0113, 0.0053, 1,  30., 4, 0, 0.01]),
+               nuisance=["lai"], obs_noise=1e-4, bwidth_r=10, bwidth_n=10,
+               minvals = {'n':1.0, 'cab':15., 'car':5., 'ant':0., 'cbrown': 0., 'cw':0.001, 'cm':0.0, 
                                'lai':.5, 'lidf':0., 'rsoil':0., 'psoil':0., 'hspot':0.0001 },
-               maxvals = { 'n': 2.5, 'cab': 80., 'car':20., 'cbrown': .1, 'cw':0.04, 'cm': 0.5,
+               maxvals = { 'n': 2.5, 'cab': 80., 'car':20., 'ant':40,  'cbrown': .1, 'cw':0.04, 'cm': 0.5,
                                'lai':8.05, 'lidf':90., 'rsoil':5., 'psoil':2., 'hspot':0.5 },
                sza=0., vza=30., raa=10., n_tries=500, do_plots=True, vin="NDVI"):
     """Experiments with VIs in the red/nir region. This function performs some experiments using
@@ -812,7 +974,7 @@ def canopy_vi_expt ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 1,  30., 4, 
     Parameters
     -------------
     x0: array
-        An 11-element array with the different parameters in their usual PROSAIL positions. If a 
+        An 12-element array with the different parameters in their usual PROSAIL positions. If a 
         parameter is not in the ``nuisance`` list, its value will be set from here.
     nuisance: list
         A list of parameters to be randomly varied in the simulations between their corresponding
@@ -846,11 +1008,12 @@ def canopy_vi_expt ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 1,  30., 4, 
     if not ( type(nuisance) == type([])):
         nuisance = list ( nuisance )
     wv = np.arange( 400, 2501 )
+    obs_noise=[obs_noise, obs_noise]
     red_pass = np.logical_and ( wv >= ( 650-bwidth_r), wv <= (650+bwidth_r))#(wv == 650 )
     nir_pass = np.logical_and ( wv >= ( 865-bwidth_r), wv <= (865+bwidth_r))
-    param_names = ['n', 'cab', 'car', 'cbrown', 'cw', 'cm', 'lai', 'lidf', 'rsoil', 'psoil', 'hspot']
-    xbase = np.zeros ( 11 )
-    span  = np.zeros ( 11 )
+    param_names = ['n', 'cab', 'car', 'ant','cbrown', 'cw', 'cm', 'lai', 'lidf', 'rsoil', 'psoil', 'hspot']
+    xbase = np.zeros ( 12 )
+    span  = np.zeros ( 12 )
     for i, param in enumerate ( param_names ):
         xbase[i] = minvals[param]
         if param in nuisance:
@@ -876,6 +1039,5 @@ def canopy_vi_expt ( x0=np.array([1.5, 40., 5., 0., 0.0113, 0.0053, 1,  30., 4, 
     nir = np.clip ( nir, 0.01, 1 )
     if do_plots:
         p = param_names.index ( nuisance[0] )
-        print(vin)
         plot_vi_space ( x[:,p],red, nir, vin )
     return x, red, nir
