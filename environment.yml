@@ -12,3 +12,23 @@ dependencies:
     - matplotlib
     - prosail
     - seaborn
+    - ipywidgets
+    - git
+    - jupyterlab
+    - notebook
+    - nbconvert
+    - ipykernel
+    - ipywidgets
+    - ipyleaflet
+    - widgetsnbextension
+    - pandas
+    - gdal>=2.3.0
+    - tqdm
+    - libgdal>=2.3.0
+    - jupyter_contrib_nbextensions
+    - netCDF4
+    - pip
+    - pip:
+        - pcse
+        - git+https://github.com/jgomezdans/GomezEngine
+
