@@ -93,8 +93,10 @@ def prospect_sensitivity_ssa ( leaf_n, leaf_cab, leaf_car, leaf_cbrown, leaf_cw,
     x0 = np.array([leaf_n, leaf_cab, leaf_car, leaf_cbrown, leaf_cw, leaf_cm])
     sensitivity = np.zeros((7,2101))
     span = np.array([1.5, 80., 20., 1., 0.0439-0.0043, 0.0152-0.0017 ])
+    rr = call_prospect_5( *x0 )
+    r0 = rr.sum(axis=1)
     for i in range(6):
-        r0 = call_prospect_5( *x0 ).sum(axis=1)
+        
         xp = x0*1.
         xp[i] = x0[i] + epsilon*span[i]
         r1 = call_prospect_5 ( *xp ).sum(axis=1)
@@ -122,7 +124,18 @@ def prospect_sensitivity_ssa ( leaf_n, leaf_cab, leaf_car, leaf_cbrown, leaf_cw,
         plt.ylabel(r'$\partial f/\partial \mathbf{x}$')
         plt.xlabel ("Wavelength [nm]")
         plt.legend(loc='best')
-    
+
+        plt.figure(figsize=(10,10))
+        plt.plot( wv, rr[:, 0], lw=2, label="Leaf Reflectance" )
+        plt.plot( wv, rr[:, 1], lw=2, label="Leaf Transmittance" )
+        plt.plot( wv, rr.sum(axis=1), lw=2, label=r"Leaf $\omega$" )
+
+        plt.xlim ( 400, 2500)
+        plt.ylabel(r'$\rho,\;\tau\;\omega$')
+        plt.xlabel ("Wavelength [nm]")
+        plt.legend(loc='best')
+
+        
     
 def sensitivity_prospect():
     epsilon = 1e-5
@@ -319,7 +332,7 @@ def red_edge_playground():
 
 def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
         n_samples=150, spaces=7, minvals = {'n':1.0, 'cab':15, 'car':10, 'cbrown': 0, 'cw':0., 'cm':0.0 },
-        maxvals = { 'n': 2.5, 'cab': 80, 'car':20, 'cbrown': 1, 'cw':0.4, 'cm': 0.5 },
+        maxvals = { 'n': 2.5, 'cab': 120, 'car':20, 'cbrown': 1, 'cw':0.4, 'cm': 0.5 },
         do_plots=True ):
     
     """A function that runs PROSPECT for a particular parameter (named in ``sweep_param``), and 
@@ -381,7 +394,7 @@ def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
     red_edge = []
     rred_edge = []
     unc = []
-    fig, axs = plt.subplots( nrows=1, ncols=2)
+    fig, axs = plt.subplots( nrows=1, ncols=2, figsize=(18,7))
     for ii, s in enumerate ( np.linspace ( minvals[sweep_param], maxvals[sweep_param], num=spaces ) ): 
         yy = np.zeros( (isel.sum(), n_samples ) )
         for i in range( n_samples ):
@@ -410,14 +423,14 @@ def red_edge ( mode="refl", sweep_param="cab", band1=670, band2=780,
             
             axs[0].set_xlabel ("Wavelength [nm]")
             axs[0].set_ylabel ( mode )
-            pretty_axes ( axs[0])
+            
 
             
     if do_plots:
         axs[1].plot ( ss, red_edge, 'o-')
         axs[1].set_xlabel(sweep_param)
         axs[1].set_ylabel (r'$\lambda_{red\, edge}\;\left[nm\right]$')
-        pretty_axes ( axs[1])
+        axs[1].set_ylim(band1 - band1*0.1, band2 + band2*0.1)
     plt.tight_layout()
     return np.array(ss), np.array(red_edge)
 
