@@ -462,7 +462,7 @@ def read_lopex_sample ( sample_no=23, do_plot=True, db_path = "data/LOPEX93/" ):
     wv = np.arange(400, 2501)
 
     if do_plot:
-        fig, axs = plt.subplots ( nrows=2, ncols=1, sharex=True )
+        fig, axs = plt.subplots ( nrows=2, ncols=1, sharex=True, figsize=(10,8))
         for nsample in range(5):
             axs[0].plot ( wv, refl[nsample,:])
             axs[1].plot ( wv, trans[nsample,:])
@@ -474,13 +474,29 @@ def read_lopex_sample ( sample_no=23, do_plot=True, db_path = "data/LOPEX93/" ):
     #return refl, trans
 
 
+def the_cost_function ( x, refl, trans ):
+    """A standard cost function. Returns the cost for an input vector ``x``"""
+    retval = call_prospect_5 ( *x )
+    if refl is None:
+        cost_refl = 0.
+    else:
+        cost_refl = ( refl - retval[ :, 0])**2
+    if trans is None:
+        cost_trans = 0.
+    else:
+        cost_trans = ( trans - retval[ :, 1])**2
+    return np.sum ( cost_refl  + cost_trans )
 
 
-def optimise_random_starts (  cost_function, refl, trans, n_tries = 20, 
+
+
+def optimise_random_starts ( refl, trans, 
+                            cost_function=the_cost_function,
+                            n_tries = 20, 
                             lobound = np.array ( 
-                            [ 1.2, 0, 0, 0, 0.0043, 0.0017]),
+                            [ 0.8, 0, 0, 0, 0.0043, 0.0017]),
          hibound = np.array ( 
-                            [ 2.5, 80, 20, 1, 0.0439, 0.0152]), 
+                            [ 2.8, 80, 20, 1, 0.0439, 0.0152]), 
          verbose = True, do_plots=True  ):
     """A function for minimising a cost function with reflectance and transmittance 
     values. To account for the local nature of the gradient descent minimiser, the
@@ -491,9 +507,6 @@ def optimise_random_starts (  cost_function, refl, trans, n_tries = 20,
     
     Parameters
     ------------
-    cost_function: function
-        A function that calculates the cost. Must take three parameters: a 6 element
-        vector, a refletance and a transmittance measurement. 
     refl: arr
         A reflectance array measured between 400 and 2500 nm at 1nm intervals
     trans: arr
@@ -524,9 +537,9 @@ def optimise_random_starts (  cost_function, refl, trans, n_tries = 20,
                        options={"disp":10})
         store.append ( retval )
         if verbose:
-            print(( "Optimisation %d" % ( tries + 1)))
-            print(("\tx_opt:", retval.x))
-            print(("\tcost: ", retval.fun))
+            xd = "".join([f"{par}:{retval.x[i]:6.4g} " 
+                          for i, par in enumerate(["n", "cab", "car", "cbrown", "cw", "cm"])])
+            print(f"Start {tries+1} => \tCost {retval.fun:g} & Parameters: {xd}")
     i =np.argmin([ res.fun for res in store ])
     fwd = call_prospect_5 (*store[i].x )
     fwd_refl = fwd[:, 0]
@@ -538,25 +551,19 @@ def optimise_random_starts (  cost_function, refl, trans, n_tries = 20,
     if do_plots:
         fig, axs = plt.subplots ( nrows=2, ncols=1, figsize=(10,10), sharex=True )
         axs = axs.flatten()
-        l1 = axs[0].plot ( wv, refl, '--', 
-                    label="Measurements")
+        if refl is not None:
+            l1 = axs[0].plot ( wv, refl, '--', 
+                        label="Measurements")
         l2 = axs[0].plot (wv, call_prospect_5 ( *store[i].x )[:,0], '-', lw=2, 
                      label="Fitted PROSPECT")
-        axs[1].plot ( wv, trans, '--')
+        if trans is not None:
+            axs[1].plot ( wv, trans, '--')
         axs[1].plot (wv, call_prospect_5 ( *store[i].x )[:,1], '-', lw=2)
         axs[0].set_title("Reflectance")
         axs[1].set_title("Transmittance")
         axs[1].set_xlabel("Wavelength [nm]")
         
     return fwd_refl, fwd_trans, store[i].x, store[i].fun
-
-
-def the_cost_function ( x, refl, trans ):
-    """A standard cost function. Returns the cost for an input vector ``x``"""
-    retval = call_prospect_5 ( *x )
-    cost_refl = ( refl - retval[ :, 0])**2
-    cost_trans = ( trans - retval[ :, 1])**2
-    return np.sum ( cost_refl  + cost_trans )
 
 def call_prosail ( n, cab, car, ant, cbrown, cw, cm, lai, lidf, rsoil, 
              psoil, hspot, sza, vza, vaa ):
