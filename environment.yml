@@ -31,4 +31,4 @@ dependencies:
     - pip:
         - pcse
         - git+https://github.com/jgomezdans/GomezEngine
-
+        - git+https://github.com/jgomezdans/gp_emulator
