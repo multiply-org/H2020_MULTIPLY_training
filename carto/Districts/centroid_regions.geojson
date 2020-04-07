@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"name": "Map_of_Districts_216",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "RGN_NM2012": "Ashanti" }, "geometry": { "type": "Point", "coordinates": [ -1.457040579703356, 6.799444209592739 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Brong Ahafo" }, "geometry": { "type": "Point", "coordinates": [ -1.665955604537457, 7.703831333536156 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Central" }, "geometry": { "type": "Point", "coordinates": [ -1.215032199939681, 5.567609009062418 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Eastern" }, "geometry": { "type": "Point", "coordinates": [ -0.448531966160366, 6.417606371467577 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Greater Accra" }, "geometry": { "type": "Point", "coordinates": [ 0.048155713034827, 5.805729379932667 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Northern" }, "geometry": { "type": "Point", "coordinates": [ -0.965267027513261, 9.35640258570151 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Upper East" }, "geometry": { "type": "Point", "coordinates": [ -0.808198074654796, 10.781214699452184 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Upper West" }, "geometry": { "type": "Point", "coordinates": [ -2.212204828618396, 10.418364759293874 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Volta" }, "geometry": { "type": "Point", "coordinates": [ 0.401784382890367, 7.242152772902284 ] } },
+{ "type": "Feature", "properties": { "RGN_NM2012": "Western" }, "geometry": { "type": "Point", "coordinates": [ -2.412931610456704, 5.742241451879687 ] } }
+]
+}
