@@ -2,10 +2,9 @@ name: mcmc_env
 channels:
     - jgomezdans
     - conda-forge
-    - defaults
 
 dependencies:
-    - python=3.6
+    - python
     - jupyter
     - numpy
     - scipy
@@ -13,19 +12,15 @@ dependencies:
     - prosail
     - seaborn
     - ipywidgets
-    - git
     - jupyterlab
     - notebook
-    - nbconvert
     - ipykernel
     - ipywidgets
     - ipyleaflet
-    - widgetsnbextension
     - pandas
-    - gdal>=2.3.0
+    - gdal
     - tqdm
-    - libgdal>=2.3.0
-    - jupyter_contrib_nbextensions
+    - libgdal
     - netCDF4
     - pip
     - pip:
