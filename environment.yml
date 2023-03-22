@@ -1,8 +1,6 @@
 name: mcmc_env
 channels:
-    - jgomezdans
     - conda-forge
-
 dependencies:
     - python
     - jupyter
