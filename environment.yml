@@ -3,15 +3,11 @@ channels:
     - conda-forge
 dependencies:
     - python
-    - jupyter
     - numpy
     - scipy
     - matplotlib
-    - prosail
     - seaborn
     - ipywidgets
-    - jupyterlab
-    - notebook
     - ipykernel
     - ipywidgets
     - ipyleaflet
@@ -25,3 +21,4 @@ dependencies:
         - pcse
         - git+https://github.com/jgomezdans/GomezEngine
         - git+https://github.com/jgomezdans/gp_emulator
+        - prosail
