@@ -2,8 +2,8 @@
 
 
 # Install a JupyterLab extension for demonstration purposes
-jupyter labextension install @jupyterlab/geojson-extension 
-jupyter labextension install @jupyter-widgets/jupyterlab-manager --minimise=False
-jupyter labextension install jupyter-leaflet
+#jupyter labextension install @jupyterlab/geojson-extension 
+#jupyter labextension install @jupyter-widgets/jupyterlab-manager --minimise=False
+#jupyter labextension install jupyter-leaflet
 jupyter trust *.ipynb
 
