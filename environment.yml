@@ -1,34 +1,26 @@
 name: mcmc_env
 channels:
-    - jgomezdans
     - conda-forge
-    - defaults
-
 dependencies:
-    - python=3.6
-    - jupyter
+    - python<=3.10
     - numpy
     - scipy
+    - jupyter
     - matplotlib
-    - prosail
     - seaborn
     - ipywidgets
-    - git
-    - jupyterlab
-    - notebook
-    - nbconvert
     - ipykernel
+    - ipympl
     - ipywidgets
     - ipyleaflet
-    - widgetsnbextension
     - pandas
-    - gdal>=2.3.0
+    - gdal
     - tqdm
-    - libgdal>=2.3.0
-    - jupyter_contrib_nbextensions
+    - libgdal
     - netCDF4
     - pip
     - pip:
         - pcse
         - git+https://github.com/jgomezdans/GomezEngine
         - git+https://github.com/jgomezdans/gp_emulator
+        - prosail
