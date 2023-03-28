@@ -1,5 +1,7 @@
 #!/bin/bash
 jupyter nbextension enable --py widgetsnbextension
+jupyter nbextension install --py --sys-prefix --overwrite ipympl
+jupyter nbextension enable --py --sys-prefix ipympl
 
 # Install a JupyterLab extension for demonstration purposes
 #jupyter labextension install @jupyterlab/geojson-extension 
