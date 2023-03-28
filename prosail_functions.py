@@ -501,7 +501,7 @@ def red_edge(
     red_edge = []
     rred_edge = []
     unc = []
-    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(18, 7))
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(6.47 * 1.62, 6.47))
     for ii, s in enumerate(
         np.linspace(minvals[sweep_param], maxvals[sweep_param], num=spaces)
     ):
@@ -541,7 +541,8 @@ def red_edge(
         axs[1].set_xlabel(sweep_param)
         axs[1].set_ylabel(r"$\lambda_{red\, edge}\;\left[nm\right]$")
         axs[1].set_ylim(band1 - band1 * 0.1, band2 + band2 * 0.1)
-    plt.tight_layout()
+    fig.tight_layout()
+    display(fig.canvas)
     return np.array(ss), np.array(red_edge)
 
 
