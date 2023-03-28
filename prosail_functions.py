@@ -656,7 +656,7 @@ def optimise_random_starts(
             args=(refl, trans),
             jac=False,
             bounds=bounds,
-            options={"disp": 10},
+            options={"disp": False},
         )
         store.append(retval)
         if verbose:
@@ -941,7 +941,9 @@ def prosail_sensitivity(
 
     if do_plots:
         wv = np.arange(400, 2501)
-        fig, axs = plt.subplots(nrows=4, ncols=3, figsize=(9, 9), sharex=True)
+        fig1, axs = plt.subplots(
+            nrows=4, ncols=3, figsize=(6.47, 6.47), sharex=True
+        )
         axs = axs.flatten()
         for i, input_parameter in enumerate(
             [
@@ -969,7 +971,8 @@ def prosail_sensitivity(
                 axs[i].set_xlabel("Wavelength [nm]")
             # pretty_axes ( axs[i] )
             # axs[i].set_ylim(-0.5, 0.5)
-        plt.figure(figsize=(9, 9))
+        fig1.tight_layout()
+        fig2 = plt.figure(figsize=(6.47, 4))
         for i, input_parameter in enumerate(
             [
                 "n",
@@ -993,8 +996,10 @@ def prosail_sensitivity(
         plt.xlim(400, 2500)
         plt.ylabel(r"$\partial f/\partial \mathbf{x}$")
         plt.xlabel("Wavelength [nm]")
-        plt.legend(loc="best")
-    plt.tight_layout()
+        plt.legend(loc="best", frameon=False, fontsize=8)
+    fig2.tight_layout()
+    display(fig1.canvas)
+    display(fig2.canvas)
     return wv, sensitivity
 
 
@@ -1028,6 +1033,7 @@ def hspot(h, theta):
         )
         retval1.append(r[wv == 865])
         retval2.append(r[wv == 650])
+    plt.figure(figsize=(5, 5))
     plt.plot(
         np.arange(-80, 80, 5),
         np.array(retval1).squeeze(),
@@ -1042,7 +1048,7 @@ def hspot(h, theta):
     )
     plt.xlabel("VZA [deg]")
     plt.ylabel("Reflectance")
-    plt.legend(loc="best")
+    plt.legend(loc="best", frameon=False, fontsize=10)
 
 
 def canopy_mtci_exp_gui():
@@ -1230,12 +1236,13 @@ def mtci_experiment(
         "lidf",
         "rsoil",
         "psoil",
+        "hspot",
     ]
     if isinstance(nuisance, str) and (nuisance in param_position):
         nuisance = list(nuisance)
     elif isinstance(nuisance, (list, tuple)):
         for x in nuisance:
-            if not x in param_position:
+            if x not in param_position:
                 raise ValueError("%s is not a PROSAIL parameter!" % x)
 
     wv = np.arange(400, 2501)
@@ -1285,6 +1292,7 @@ def mtci_experiment(
     rr = np.corrcoef(cab_axis, np.polyval(p, MTCI))[0, 1]
 
     if do_plots:
+        fig1 = plt.figure(figsize=(6.47, 4))
         plt.plot(MTCI, cab_axis, "o", markerfacecolor="none")
         plt.ylabel("Leaf chlorophyll concentration")
         plt.xlabel("MTCI")
@@ -1300,7 +1308,8 @@ def mtci_experiment(
             )
 
         plt.plot([0, 10], np.polyval(p, [0, 10]), "--")
-
+    fig1.tight_layout()
+    display(fig1.canvas)
     return cab_axis, np.array(MTCI), p[0], p[1]
 
 
@@ -1341,16 +1350,15 @@ def plot_vi_space(v, r, n, the_vi):
     else:
         raise ValueError("We only deal with NDVI, SAVI or OSAVI")
 
-    plt.figure(figsize=(10, 10))
-    plt.subplot(1, 2, 1)
-    CS = plt.contour(R, N, vi, 6, colors="k")
-    plt.clabel(CS, fontsize=9, inline=1)
-    plt.scatter(r, n, c=v, cmap=plt.cm.Greens)
-    pretty_axes()
-    plt.subplot(1, 2, 2)
-    plt.plot(v, vix, "o")
-    plt.xlabel("value")
-    plt.ylabel(the_vi)
+    fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(13, 4))
+    axs = axs.flatten()
+    CS = axs[0].contour(R, N, vi, 6, colors="k")
+    axs[0].clabel(CS, fontsize=9, inline=1)
+    axs[0].scatter(r, n, c=v, cmap=plt.cm.Greens)
+
+    axs[1].plot(v, vix, "o")
+    axs[1].set_xlabel("value")
+    axs[1].set_ylabel(the_vi)
 
 
 def canopy_vi_exp_gui():
@@ -1483,7 +1491,7 @@ def canopy_vi_expt(
     sza=0.0,
     vza=30.0,
     raa=10.0,
-    n_tries=500,
+    n_tries=5000,
     do_plots=True,
     vin="NDVI",
 ):
@@ -1529,7 +1537,7 @@ def canopy_vi_expt(
     ----------
     A tuple containing the input parameters, and the red and nir reflectances
     """
-    if not (type(nuisance) == type([])):
+    if not isinstance(nuisance, list):
         nuisance = list(nuisance)
     wv = np.arange(400, 2501)
     obs_noise = [obs_noise, obs_noise]
