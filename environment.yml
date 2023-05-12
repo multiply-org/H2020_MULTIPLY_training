@@ -6,22 +6,17 @@ dependencies:
     - numpy
     - scipy
     - jupyterlab
-    - matplotlib
-    - seaborn
+    - matplotlib-base
+    - matplotlib-inline
     - ipywidgets
     - ipykernel
     - ipympl
     - ipywidgets
     - ipyleaflet
     - pandas
-    - gdal
     - tqdm
-    - libgdal
-    - netCDF4
-    - pip
     - git
     - pip:
         - pcse
-        - git+https://github.com/jgomezdans/GomezEngine
-        - git+https://github.com/jgomezdans/gp_emulator
+        - https://github.com/jgomezdans/gp_emulator/archive/refs/tags/1.6.5.zip
         - prosail

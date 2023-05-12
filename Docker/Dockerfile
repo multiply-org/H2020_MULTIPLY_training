@@ -1,13 +1,18 @@
 # Start from the mambaorg/micromamba base image
 FROM mambaorg/micromamba:latest
 
-# Set the working directory to /app
 
 # Copy the environment.yml file to the container
 COPY --chown=$MAMBA_USER:$MAMBA_USER environment.yml /tmp/environment.yml
 
-RUN micromamba install -y -n base -f /tmp/environment.yml && \
-    micromamba clean --all --yes
+RUN micromamba install --freeze-installed -y -n base -f /tmp/environment.yml && \
+    micromamba clean --all --yes \
+    && find /opt/conda/ -follow -type f -name '*.a' -delete \
+    && find /opt/conda/ -follow -type f -name '*.pyc' -delete \
+    && find /opt/conda/ -follow -type f -name '*.js.map' -delete \
+    && rm -rf /opt/conda/pkgs/*
+
+
 ARG MAMBA_DOCKERFILE_ACTIVATE=1 
 
 
