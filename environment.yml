@@ -1,11 +1,11 @@
-name: mcmc_env
+name: base
 channels:
     - conda-forge
 dependencies:
     - python<=3.10
     - numpy
     - scipy
-    - jupyter
+    - jupyterlab
     - matplotlib
     - seaborn
     - ipywidgets
@@ -19,6 +19,7 @@ dependencies:
     - libgdal
     - netCDF4
     - pip
+    - git
     - pip:
         - pcse
         - git+https://github.com/jgomezdans/GomezEngine
