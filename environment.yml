@@ -1,4 +1,4 @@
-name: base
+name: multiply 
 channels:
     - conda-forge
 dependencies:
@@ -15,7 +15,7 @@ dependencies:
     - ipyleaflet
     - pandas
     - tqdm
-    - git
+    - pip
     - pip:
         - pcse
         - https://github.com/jgomezdans/gp_emulator/archive/refs/tags/1.6.5.zip
