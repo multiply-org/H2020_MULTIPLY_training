@@ -15,6 +15,7 @@ dependencies:
     - ipyleaflet
     - pandas
     - tqdm
+    - seaborn
     - pip
     - pip:
         - pcse
