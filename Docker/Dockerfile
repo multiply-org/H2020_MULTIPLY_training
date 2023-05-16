@@ -24,4 +24,4 @@ SHELL ["/bin/bash", "-c"]
 ENTRYPOINT source /venv/bin/activate && \
            cd /tmp/multiply && \
 	   jupyter lab --no-browser --ip=0.0.0.0 --port=8888 \
-           --allow-root
+           --allow-root --NotebookApp.token=''
