@@ -1,26 +1,23 @@
-name: mcmc_env
+name: multiply 
 channels:
     - conda-forge
 dependencies:
     - python<=3.10
     - numpy
     - scipy
-    - jupyter
-    - matplotlib
-    - seaborn
+    - jupyterlab
+    - matplotlib-base
+    - matplotlib-inline
     - ipywidgets
     - ipykernel
     - ipympl
     - ipywidgets
     - ipyleaflet
     - pandas
-    - gdal
     - tqdm
-    - libgdal
-    - netCDF4
+    - seaborn
     - pip
     - pip:
         - pcse
-        - git+https://github.com/jgomezdans/GomezEngine
-        - git+https://github.com/jgomezdans/gp_emulator
+        - https://github.com/jgomezdans/gp_emulator/archive/refs/tags/1.6.5.zip
         - prosail
